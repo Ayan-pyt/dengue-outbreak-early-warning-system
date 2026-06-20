@@ -110,16 +110,13 @@ So the recommended (and ultimately implemented) architecture is a **hybrid**: Ra
 
 ---
 
-## Production Upgrade
+## How it was built (and debugged)
 
-Taking the research's own recommendation seriously, the project was extended from a notebook + paper into an actual interactive system — because a research finding that recruiters and stakeholders can't click through and test is far less convincing than one they can.
+Taking the research's own recommendation seriously, the project was extended from a notebook + paper into an actual interactive system — because a finding that recruiters and stakeholders can't click through and test is far less convincing than one they can.
 
-This involved:
-- Cleaning and restructuring the codebase into a deployable project layout
-- Building a Streamlit dashboard around the hybrid Random Forest + LSTM architecture
-- Adding SHAP-based explainability so predictions show *why*, not just *what*
-- Re-tuning the classification decision threshold (0.724, found via precision-recall curve analysis) to maximize F1 while preserving the 100% recall that made Random Forest the right choice in the first place
-- Engineering additional rolling/cumulative climate features (4-week mean precipitation, humidity, temperature) to sharpen the classifier further during the production retraining pass
+This involved cleaning and restructuring the codebase into a deployable layout, building a Streamlit dashboard around the hybrid Random Forest + LSTM architecture, adding SHAP-based explainability, and re-tuning the classification decision threshold (0.724, found via precision-recall curve analysis) to maximize F1 while preserving the 100% recall that made Random Forest the right choice in the first place.
+
+Moving from notebook to production surfaced two real, non-obvious bugs that a static research paper would never have exposed. Both were isolated through systematic, evidence-based debugging — replicating predictions across environments to localize the fault, then verifying fixes against real held-out data with known ground truth — and are fully resolved in the current build.
 
 ---
 
@@ -128,19 +125,6 @@ This involved:
 - **Predict** — enter this week's climate conditions (or load a real historical week directly) and get an outbreak risk level, a secondary LSTM case-count estimate, and a clear recommendation panel
 - **Analytics** — historical case trends and climate-vs-cases relationships, filterable by division
 - **Explain** — live SHAP feature attribution showing exactly which climate variables drove each individual prediction
-
----
-
-## How it was built (and debugged)
-
-Moving from notebook to production surfaced real bugs that never would have appeared in a static research paper — and finding them required the same rigor as the original research:
-
-1. **Initial deployment showed flat, unresponsive predictions** — every climate scenario, however extreme, scored within a narrow ~23–26% band, regardless of how dramatically rainfall, temperature, or humidity were changed.
-2. **Root-caused via systematic elimination**: replicated predictions inside the original training notebook to rule out the deployment stack (Streamlit, SHAP, file paths) — confirmed in-notebook and in-app outputs matched exactly, isolating the issue to the model/feature pipeline rather than the serving layer.
-3. **First hypothesis confirmed real, underlying signal**: correlation analysis showed the classifier relies almost entirely on *lagged* climate values, not current-week snapshots — current-week rainfall and temperature carried almost no signal on their own. This matches the underlying biology, but meant naive manual test inputs (which held lag values artificially flat) never exercised the part of the model that actually mattered.
-4. **Retrained with rolling features and re-tuned the threshold** accordingly, lifting precision substantially while preserving full recall.
-5. **A second, deeper bug was found afterward**: even after the above fix, real historical test weeks with known, verified probabilities still scored flat once run through the deployed app. Direct comparison of raw vs. scaler-transformed inputs revealed the retrained classifier had actually been fit on **unscaled** training data — meaning the scaler fitted "to match" was never actually used during training, and applying it at inference time was silently corrupting every prediction. Bypassing the scaler for this model resolved the issue completely, confirmed against multiple real test-set rows with known ground truth.
-6. **Validated against real historical weeks, not synthetic scenarios.** A simplified "trend" toggle in the UI can only express a linear, monotonic lag pattern — real outbreak-predictive weeks have non-monotonic climate trajectories that no simple dropdown can fully reproduce. The deployed app includes a "Load a real example week" feature that replays actual, ground-truth-labeled historical weeks, giving an honest and reproducible way to demonstrate the model's real, validated behavior.
 
 ---
 
@@ -185,7 +169,7 @@ The figures above tell the full story, but as a quick reference — the producti
 
 ## Validation & Debugging Journey
 
-Covered in detail above under [How it was built (and debugged)](#how-it-was-built-and-debugged) — included here as its own heading because it was a substantial, multi-stage effort in its own right: isolating a flat-prediction bug down to its real cause (twice, since two separate issues were stacked on top of each other), engineering a fix grounded in the data's actual correlations rather than guesswork, and building a validation method (real historical example weeks) specifically because synthetic test scenarios proved structurally incapable of catching the underlying problem.
+Production deployment was validated against real, held-out historical weeks with known outcomes rather than synthetic test scenarios — a simplified UI input (like a linear "trend" toggle) can only express monotonic patterns, while real outbreak-predictive weeks have non-monotonic climate trajectories that no simple dropdown can fully reproduce. The deployed app includes a "Load a real example week" feature for exactly this reason: it replays actual, ground-truth-labeled historical weeks, giving an honest and reproducible way to confirm the model's real, validated behavior on demand.
 
 ---
 
@@ -204,7 +188,7 @@ Covered in detail above under [How it was built (and debugged)](#how-it-was-buil
 - Integrate multi-year historical data to move from a single-year snapshot to a robust, decadal predictive tool — directly addressing the negative-R² regression results
 - Explore division-specific modeling or a division feature/embedding, once enough historical data exists per division to justify it
 - Revisit the LSTM with proper multi-step sequence input (current implementation uses a single timestep per prediction) and more outbreak examples to address its classification failure
-- Build out the hybrid dashboard further: combine the Random Forest's outbreak alert with the LSTM's case-scale estimate into a single unified risk narrative, rather than two separate outputs
+- Build out the hybrid dashboard further: combine the Random Forest's outbreak alert with the LSTM's case-scale estimate into a single unified risk narrative rather than two separate outputs
 
 ---
 
@@ -217,4 +201,4 @@ streamlit run app/streamlit_app.py
 
 ## Author
 
-Independent research and engineering project — from initial hypothesis and literature review through dataset construction, six-model comparison, and production deployment with full debugging documentation.
+Independent research and engineering project  from initial hypothesis and literature review through dataset construction, six-model comparison and production deployment with full debugging documentation.
