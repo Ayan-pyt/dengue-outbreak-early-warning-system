@@ -1,13 +1,14 @@
 # Dengue Outbreak Early Warning System
 
-**A personal research project exploring whether machine learning and lagged climate data can predict dengue outbreaks in Bangladesh — extended into a deployed, debugged, interactive system.**
+**A personal research project exploring whether machine learning and lagged climate data can predict dengue outbreaks in Bangladesh  extended into a deployed, debugged, interactive system.**
 
 ## At a Glance
 
 - 🦟 **2 real government-sourced datasets**: DGHS weekly dengue surveillance + Visual Crossing daily climate data, merged across all 8 administrative divisions of Bangladesh
-- 🤖 **6 models trained and compared**: Random Forest, XGBoost, and LSTM — each built separately for regression (case counts) and classification (outbreak detection)
-- 🏆 **Best results**: Random Forest — ROC-AUC **0.95**, Recall **1.00** (classification) · LSTM — RMSE **90.50** (regression, ~68% lower error than Random Forest)
-- 🚀 **Shipped as a working app**: production-debugged, threshold-tuned, with SHAP explainability and a real-data validation picker
+- **6 models trained and compared**: Random Forest, XGBoost, and LSTM — each built separately for regression (case counts) and classification (outbreak detection)
+- **Best results**: Random Forest — ROC-AUC **0.95**, Recall **1.00** (classification) · LSTM — RMSE **90.50** (regression, ~68% lower error than Random Forest)
+- **Shipped as a working app**: production-debugged, threshold-tuned, with SHAP explainability and a real-data validation picker
+**[Live Demo](https://dengue-outbreak-early-warning-system-ayan-ml.streamlit.app/)** · **[Notebook](notebooks/dengue_outbreak.ipynb)**
 
 ---
 
@@ -15,13 +16,13 @@
 
 Dengue fever has shifted from a seasonal nuisance to a year-round public health emergency in Bangladesh — 2023 alone saw over 321,000 hospitalizations and 1,705 deaths. This project started as a personal research question: **can climate data, lagged by 1–4 weeks to reflect the biological delay in mosquito breeding and viral incubation, actually predict outbreaks before they happen?**
 
-I built an end-to-end pipeline from two real, independently sourced datasets, trained six models across two task types, and evaluated them rigorously. The findings pointed to a clear answer — tree-based ensembles for *detecting* outbreaks, LSTM for *estimating scale* — which I then took further than the research stage: I built a deployed, interactive system around that hybrid finding, and in doing so, uncovered and fixed several real bugs that only surfaced once the models left the notebook.
+I built an end-to-end pipeline from two real, independently sourced datasets, trained six models across two task types, and evaluated them rigorously. The findings pointed to a clear answer: tree-based ensembles for *detecting* outbreaks, LSTM for *estimating scale* — which I then took further than the research stage: I built a deployed, interactive system around that hybrid finding, and in doing so, uncovered and fixed several real bugs that only surfaced once the models left the notebook.
 
 ---
 
 ## Research Background
 
-The starting hypothesis was grounded in dengue biology: ambient temperature affects the virus's incubation period inside the mosquito, while rainfall and humidity determine the availability of breeding water — but none of this affects case counts immediately. Weather from **1–4 weeks prior** is typically the strongest predictor of a current surge, not same-week conditions.
+The starting hypothesis was grounded in dengue biology: ambient temperature affects the virus's incubation period inside the mosquito, while rainfall and humidity determine the availability of breeding water  but none of this affects case counts immediately. Weather from **1–4 weeks prior** is typically the strongest predictor of a current surge, not same-week conditions.
 
 Most existing surveillance in Bangladesh is reactive, responding after hospitalizations spike rather than anticipating them. Prior published work (reviewed as part of this research) had explored tree-based models like Random Forest, XGBoost, and LightGBM for similar early-warning systems, generally using **monthly** granularity. This project pushed to **weekly granularity with explicit 1–4 week lag features** for a tighter time correlation, and added an LSTM model specifically to test whether sequence learning could outperform tree-based models where they tend to struggle — capturing genuine temporal memory rather than treating each week as an independent snapshot.
 
